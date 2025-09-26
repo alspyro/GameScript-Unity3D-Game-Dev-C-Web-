@@ -1,0 +1,19 @@
+//Example: Custom Editor Window
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEngine;
+
+public class LevelBuilderWindow : EditorWindow {
+    string prefabPath = "Assets/Prefabs/Environment";
+    [MenuItem("Tools/Level Builder")]
+    static void ShowWindow() => GetWindow<LevelBuilderWindow>("Level Builder");
+
+    void OnGUI() {
+        if (GUILayout.Button("Scatter Trees")) {
+            foreach (var pos in RandomPoints(50))
+                PrefabUtility.InstantiatePrefab(Resources.Load($"{prefabPath}/Tree"), null)
+                             .transform.position = pos;
+        }
+    }
+}
+#endif
