@@ -1,0 +1,21 @@
+//Example: Object Pooling
+public class BulletPool : MonoBehaviour {
+    [SerializeField] GameObject bulletPrefab;
+    Queue<GameObject> pool = new Queue<GameObject>();
+
+    public GameObject GetBullet(Vector3 pos, Quaternion rot) {
+        if (pool.Count == 0) ExpandPool();
+        var b = pool.Dequeue();
+        b.transform.SetPositionAndRotation(pos, rot);
+        b.SetActive(true);
+        return b;
+    }
+
+    void ExpandPool() {
+        for (int i = 0; i < 20; i++) {
+            var b = Instantiate(bulletPrefab);
+            b.SetActive(false);
+            pool.Enqueue(b);
+        }
+    }
+}
