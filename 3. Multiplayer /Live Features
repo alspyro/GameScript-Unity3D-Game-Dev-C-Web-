@@ -1,0 +1,17 @@
+//Example: Simple Authoritative Server with Mirror
+using Mirror;
+
+public class PlayerMovement : NetworkBehaviour {
+    [SerializeField] float speed = 5f;
+
+    void Update() {
+        if (!isLocalPlayer) return;
+        var move = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+        CmdMove(move);
+    }
+
+    [Command] // runs on server
+    void CmdMove(Vector3 dir) {
+        transform.position += dir * speed * Time.deltaTime;
+    }
+}
