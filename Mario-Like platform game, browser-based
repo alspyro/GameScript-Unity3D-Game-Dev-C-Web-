@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Platformer with Extra Platforms</title>
+  <style>
+    body {
+      margin: 0;
+      background: #87ceeb;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #4ec04e;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="800" height="400"></canvas>
+  
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const player = {
+      x: 50,
+      y: 300,
+      width: 40,
+      height: 40,
+      color: "red",
+      dy: 0,
+      gravity: 0.8,
+      jumpPower: -12,
+      grounded: false,
+      speed: 5,
+      jumps: 0,
+      maxJumps: 2
+    };
+
+    const keys = {};
+
+    const ground = { x: 0, y: 350, width: 800, height: 50, color: "brown" };
+
+    // Three platforms
+    const platforms = [
+      { x: 300, y: 250, width: 150, height: 20, color: "darkgreen" }, // middle
+      { x: 150, y: 180, width: 120, height: 20, color: "darkgreen" }, // left high
+      { x: 550, y: 160, width: 120, height: 20, color: "darkgreen" }  // right high
+    ];
+
+    let coin = { x: 350, y: 210, size: 20, color: "gold", collected: false };
+    let score = 0;
+    let gameOver = false;
+    let gameWin = false;
+
+    const enemy = {
+      x: 600,
+      y: 310,
+      width: 30,
+      height: 40,
+      color: "black",
+      speed: 2,
+      dir: -1
+    };
+
+    function drawRect(obj) {
+      ctx.fillStyle = obj.color;
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+
+    function drawPlayer() {
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    function drawCoin() {
+      if (!coin.collected) {
+        ctx.fillStyle = coin.color;
+        ctx.beginPath();
+        ctx.arc(coin.x, coin.y, coin.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function updatePlayer() {
+      if (gameOver || gameWin) return;
+
+      // Movement
+      if (keys["ArrowLeft"]) player.x -= player.speed;
+      if (keys["ArrowRight"]) player.x += player.speed;
+
+      // Gravity
+      player.y += player.dy;
+      player.dy += player.gravity;
+
+      // Ground collision
+      if (player.y + player.height > ground.y) {
+        player.y = ground.y - player.height;
+        player.dy = 0;
+        player.grounded = true;
+        player.jumps = 0;
+      } else {
+        player.grounded = false;
+      }
+
+      // Platform collisions
+      for (let plat of platforms) {
+        if (
+          player.x < plat.x + plat.width &&
+          player.x + player.width > plat.x &&
+          player.y + player.height > plat.y &&
+          player.y + player.height < plat.y + plat.height &&
+          player.dy >= 0
+        ) {
+          player.y = plat.y - player.height;
+          player.dy = 0;
+          player.grounded = true;
+          player.jumps = 0;
+        }
+      }
+
+      // Coin collection
+      if (
+        !coin.collected &&
+        player.x < coin.x + coin.size &&
+        player.x + player.width > coin.x &&
+        player.y < coin.y + coin.size &&
+        player.y + player.height > coin.y
+      ) {
+        coin.collected = true;
+        score += 1;
+        if (score >= 5) {
+          gameWin = true;
+          handleEndGame("🎉 You Win! Final Score: " + score);
+        } else {
+          respawnCoin();
+        }
+      }
+
+      // Enemy collision
+      if (
+        player.x < enemy.x + enemy.width &&
+        player.x + player.width > enemy.x &&
+        player.y < enemy.y + enemy.height &&
+        player.y + player.height > enemy.y
+      ) {
+        gameOver = true;
+        handleEndGame("💀 Game Over! Final Score: " + score);
+      }
+    }
+
+    function updateEnemy() {
+      if (gameOver || gameWin) return;
+
+      enemy.x += enemy.speed * enemy.dir;
+      if (enemy.x < 500 || enemy.x > 700) {
+        enemy.dir *= -1;
+      }
+    }
+
+    function jump() {
+      if ((player.grounded || player.jumps < player.maxJumps) && !gameOver && !gameWin) {
+        player.dy = player.jumpPower;
+        player.jumps++;
+      }
+    }
+
+    function respawnCoin() {
+      coin.x = Math.random() * (canvas.width - 50) + 25;
+      coin.y = Math.random() * 200 + 100;
+      coin.collected = false;
+    }
+
+    function handleEndGame(message) {
+      setTimeout(() => {
+        const retry = confirm(message + "\n\nRetry? (OK = Yes, Cancel = No)");
+        if (retry) {
+          document.location.reload();
+        } else {
+          window.close();
+        }
+      }, 100);
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      updatePlayer();
+      updateEnemy();
+
+      drawRect(ground);
+      platforms.forEach(drawRect);
+      drawCoin();
+      drawRect(enemy);
+      drawPlayer();
+
+      // Score
+      ctx.fillStyle = "black";
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + score, 20, 30);
+
+      if (!gameOver && !gameWin) {
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    // Controls
+    document.addEventListener("keydown", (e) => {
+      keys[e.key] = true;
+      if (e.key === " " || e.key === "ArrowUp") jump();
+    });
+    document.addEventListener("keyup", (e) => {
+      keys[e.key] = false;
+    });
+
+    gameLoop();
+  </script>
+</body>
+</html>
