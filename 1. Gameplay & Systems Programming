@@ -1,0 +1,11 @@
+// Example: Modular Event System
+// EventChannel.cs
+
+using UnityEngine;
+using UnityEngine.Events;
+
+[CreateAssetMenu(menuName = "Events/Event Channel")]
+public class EventChannel : ScriptableObject {
+    public UnityAction<object> OnEventRaised;
+    public void Raise(object payload = null) => OnEventRaised?.Invoke(payload);
+}
